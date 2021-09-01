@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+
+  db:
+    container_name: traffic_light_db
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: 528555
+      POSTGRES_USER: traffic_light
+      POSTGRES_DB: traffic_light
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  web:
+    container_name: traffic_light_web
+    image: abramovio/traffic_light:tagname
+    command: gunicorn test_traffic_light.wsgi:application --bind 0.0.0.0:8000
+    ports:
+      - 8000:8000
