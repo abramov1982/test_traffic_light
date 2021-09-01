@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Сотрудники</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+</head>
+<body>
+{% load mptt_tags %}
+    {% recursetree nodes %}
+        <ul class="list-group">
+            <li class="list-group-item">
+                <button class="btn btn-primary" type="button" data-toggle="collapse" onclick="get_employees({{ node.id }})"
+                        data-target="#{{ node.id }}" aria-expanded="false" aria-controls="{{ node.id }}">{{ node.name }}</button>
+            </li>
+            <br />
+            <div class="collapse" id="{{ node.id }}">
+                <div class="card card-body" id="{{ node.id }}">
+                    <li class="list-group-item">
+                        {% if not node.is_leaf_node %}
+                            {{ children }}
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item">
+                        <h4>Сотрудники подразделения - {{ node.name }}</h4>
+                        <table class="table" hidden="true" id="{{ node.id }}">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Имя сотрудника</th>
+                                    <th scope="col">Должность</th>
+                                    <th scope="col">Дата приёма на работу</th>
+                                    <th scope="col">Оклад</th>
+                                    <th scope="col">Подразделение</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </li>
+                </div>
+            </div>
+        </ul>
+    {% endrecursetree %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <script>
+        function get_employees(id) {
+            let table_state = document.querySelector(`#${CSS.escape(id)} > li > table`).getAttribute("hidden")
+            if (table_state == "true"){
+                let data = JSON.stringify({unit_id: id})
+                const url = '/get_employees'
+                fetch(url, {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': '{{ csrf_token }}','Content-Type': 'application/json'},
+                    body: data
+                    }).then((response) => {
+                        return response.json();
+                    }).then((data) => {
+                        let unit_table = document.querySelector(`#${CSS.escape(id)} > li > table`)
+                        unit_table.removeAttribute("hidden")
+                    data.forEach(element => {
+                        let tr_elem = document.createElement("tr")
+                        let full_name = document.createElement("th")
+                        full_name.innerHTML = `${element['full_name']}`
+                        let position = document.createElement("th")
+                        position.innerHTML = `${element['position']}`
+                        let employment_date = document.createElement("th")
+                        employment_date.innerHTML = `${element['employment_date']}`
+                        let salary = document.createElement("th")
+                        salary.innerHTML = `${element['salary']}`
+                        let unit = document.createElement("th")
+                        unit.innerHTML = `${element['unit__name']}`
+                        tr_elem.appendChild(full_name)
+                        tr_elem.appendChild(position)
+                        tr_elem.appendChild(employment_date)
+                        tr_elem.appendChild(salary)
+                        tr_elem.appendChild(unit)
+                        unit_table.appendChild(tr_elem);});
+                    });
+                }
+            }
+    </script>
+</body>
+</html>
